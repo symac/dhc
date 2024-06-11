@@ -1,0 +1,10 @@
+{% extends "base.html.twig" %}
+
+{% block body %}
+    <h1>{{ university.label }}</h1>
+    <ul>
+    {% for award in university.doctorate.awards %}
+        <li>{{ award.displayDate | date("Y") }} : {{ award.person.label }}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}

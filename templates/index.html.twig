@@ -1,0 +1,9 @@
+{% extends "base.html.twig" %}
+
+{% block body %}
+    <ul>
+    {% for university in universities %}
+        <li><a href="{{ url("app_university", {qid: university.qid, slug: university.label|slug}) }}">{{ university.label }}</a></li>
+    {% endfor %}
+    </ul>
+{% endblock %}
