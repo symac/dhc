@@ -1,0 +1,18 @@
+{% extends "base.html.twig" %}
+
+{% block body %}
+    <h2>{{ person.label }} - {{ person.awards|length }} doctorats</h2>
+    <ul>
+        {% for award in person.awards %}
+            <li>
+                {% if award.displayDate is not null %}
+                    {{ award.displayDate | date("Y") }}
+                {% else %}
+                    [date inconnue]
+                {% endif %}
+                :
+                <a href="{{ url("app_university", {qid: award.doctorate.university.qid, slug:award.doctorate.university.label|slug }) }}">{{ award.doctorate.university.label }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

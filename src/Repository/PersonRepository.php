@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Controller\IndexController;
 use App\Entity\Person;
+use App\Entity\University;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,6 +18,80 @@ class PersonRepository extends ServiceEntityRepository
         parent::__construct($registry, Person::class);
     }
 
+    public function findOneByQid(string $qid): ?Person
+    {
+        return $this->createQueryBuilder('p')
+            ->select( 'p', 'a', 'd', 'a', 'u')
+            ->leftJoin('p.awards', 'a')
+            ->leftJoin('a.doctorate', 'd')
+            ->leftJoin('d.university', 'u')
+            ->andWhere('p.qid = :qid')
+            ->setParameter('qid', $qid)
+            ->getQuery()
+            ->getOneOrNullResult()
+            ;
+    }
+
+    public function findImagesNeedUpdate(): array {
+        return $this->createQueryBuilder('p')
+            ->where("p.image is not null and (p.imageCreator is null OR p.imageLicense is null)")
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function updateCount(): void
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "UPDATE `person` set count_awards=(select count(*) from award where award.person_id = person.id);";
+        $stmt = $conn->prepare($sql);
+        $stmt->executeQuery();
+    }
+
+    public function getYearStats(): array {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "SELECT SUBSTR(display_date, 1, 3) as year, gender, count(*) as nb FROM person, award where person.id = award.person_id group by year, gender";
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery();
+        $yearStats = [];
+        $years = [];
+
+        foreach ($result->fetchAllAssociative() as $row) {
+            if ($row['year'] == "") {
+                $row["year"] = "année inconnue";
+            } else {
+                $row["year"] = $row['year']."0";
+            }
+
+            if ($row['gender'] == "") {
+                $row['gender'] = "genre non spécifié sur wikidata";
+            } else {
+                $row["gender"] = IndexController::genderMap($row['gender']);
+            }
+
+            $yearStats[$row['gender']][$row['year']] = $row['nb'];
+            $years[$row['year']] = $row['year'];
+        }
+
+        foreach ($yearStats as $key => $value) {
+            foreach ($years as $year) {
+                if (!isset($yearStats[$key][$year])) {
+                    $yearStats[$key][$year] = 0;
+                }
+
+                ksort($yearStats[$key]);
+            }
+        }
+
+        return $yearStats;
+    }
+
+    public function getGenderStats(): array {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "SELECT gender, count(*) as nb FROM person group by gender;";
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery();
+        return $result->fetchAllAssociative();
+    }
     //    /**
     //     * @return Person[] Returns an array of Person objects
     //     */

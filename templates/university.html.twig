@@ -1,10 +1,141 @@
 {% extends "base.html.twig" %}
 
-{% block body %}
-    <h1>{{ university.label }}</h1>
-    <ul>
-    {% for award in university.doctorate.awards %}
-        <li>{{ award.displayDate | date("Y") }} : {{ award.person.label }}</li>
-    {% endfor %}
-    </ul>
+{% block stylesheets %}
+    <style>
+        td, th {
+            text-align: center;
+        }
+
+        small {
+            font-size: 0.7em;
+        }
+
+        img.wd-logo {
+            height: 1em;
+        }
+
+        div.multipleDoctorates {
+            border: 2px solid green;
+            padding: 0.2em;
+            border-radius: 0.2em;
+            background-image: url("{{ asset("favicon.svg") }}");
+            background-size: 2em;
+            background-position: 1em;
+            background-color: yellow;
+            color: black;
+        }
+
+        .personName {
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+
+        #genderChartParent {
+            max-height: 15em;
+        }
+
+        @media only screen and (min-width: 1024px) {
+            #introduction {
+                display: grid;
+                grid-template-columns: 6fr 1fr;
+                grid-auto-flow: row;
+            }
+        }
+    </style>
 {% endblock %}
+
+{% block javascripts %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const genderChart = document.getElementById('genderChart');
+
+        new Chart(genderChart, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for gender in genderGap %}'{{ gender.genderLabel }}'{% if not loop.last %},{% endif %} {% endfor %}],
+                datasets: [{
+                    label: 'nombre de personnes',
+                    data: [{% for gender in genderGap %}{{ gender.nb }}{% if not loop.last %},{% endif %} {% endfor %}],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: "Répartition par genre"
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}
+
+    {% block body %}
+        <div id="introduction">
+            <div id="text">
+                <h2>{{ university.label }}</h2>
+                <p>Le <a
+                            href="https://www.wikidata.org/wiki/{{ university.doctorate.qid }}">{{ university.doctorate.label }}</a>
+                    a été
+                    décerné {{ university.doctorate.awards|length }} fois.</p>
+            </div>
+            <div id="genderChartParent">
+                <canvas id="genderChart"></canvas>
+            </div>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>Année</th>
+                <th>Genre</th>
+                <th>Image</th>
+                <th>Titulaire</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for award in university.doctorate.awards %}
+                <tr>
+                    <td>
+                        {% if award.displayDate is not null %}
+                            {{ award.displayDate | date("Y") }}
+                        {% else %}
+                            [date inconnue]
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ award.person.displayGender }}
+                        {% if award.person.displayGender == "?" %}<br/><a href="https://www.wikidata.org/wiki/{{ award.person.qid }}">✎</a>{% endif %}
+                    </td>
+                    <td>
+                        {% if award.person.image is not null %}
+                            <a href="{{ award.person.commonsUrl }}">
+                                <img src="{{ award.person.imageThumbnailUrl }}"
+                                     alt="photo de {{ award.person.label }}"/>
+                            </a><br/>
+                            <small>{{ award.person.imageLicense }} - {{ award.person.imageCreator|raw }}</small>
+                        {% else %}
+                            <img src="{{ asset("blank_person_placeholder.svg") }}" alt="pas de photo disponible"/>
+                        {% endif %}
+                    </td>
+                    <td>
+                    <span class="personName">{{ award.person.label }}
+                        <a href="https://www.wikidata.org/wiki/{{ award.person.qid }}">
+                        <img class="wd-logo" src="{{ asset("wikidata-logo.svg") }}"/></a></span>
+                        <p class="personDescription">{{ award.person.description }}</p>
+                        {% if award.person.countAwards > 1 %}
+                            <div class="multipleDoctorates">Titulaire de <a
+                                        href="{{ url("app_person", {qid: award.person.qid, slug: award.person.label|slug}) }}">{{ award.person.countAwards }}
+                                    doctorats </a>
+                            </div>
+                        {% else %}
+                            &nbsp;
+                        {% endif %}
+
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endblock %}

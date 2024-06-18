@@ -16,6 +16,39 @@ class UniversityRepository extends ServiceEntityRepository
         parent::__construct($registry, University::class);
     }
 
+    public function findOneByQid(string $qid): ?University
+    {
+        return $this->createQueryBuilder('u')
+            ->select('u', 'd', 'a', 'p')
+            ->leftJoin('u.doctorate', 'd')
+            ->leftJoin('d.awards', 'a')
+            ->leftJoin('a.person', 'p')
+            ->andWhere('u.qid = :qid')
+            ->setParameter('qid', $qid)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
+    public function findAllForIndex(): array  {
+        return $this->createQueryBuilder('u')
+            ->select('u', 'd', 'a', 'p')
+            ->leftJoin('u.doctorate', 'd')
+            ->leftJoin('d.awards', 'a')
+            ->leftJoin('a.person', 'p')
+            ->orderBy('u.label', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function getGenderStats(University $university): array {
+        $conn = $this->getEntityManager()->getConnection();
+        $sql = "SELECT gender, count(*) as nb FROM person, award where award.doctorate_id = ? and award.person_id = person.id group by gender;";
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery([$university->getDoctorate()->getId()]);
+        return $result->fetchAllAssociative();
+    }
+
 //    /**
 //     * @return University[] Returns an array of University objects
 //     */

@@ -1,9 +1,186 @@
 {% extends "base.html.twig" %}
 
+{% block stylesheets %}
+    <style>
+        .number-container {
+            position: relative;
+            display: inline-block;
+            padding: 20px;
+            width:100%;
+            border: 3px solid #444;
+            border-radius: 10px;
+            background-color: #fff;
+            text-align: center;
+            margin-bottom: 1em;
+        }
+
+        @media only screen and (min-width: 1024px) {
+            .container {
+                display: grid;
+                grid-template-columns: 0.3fr 1.7fr;
+                grid-template-rows: auto auto;
+                grid-template-areas:
+        "a c"
+        "b c" ;
+                gap: 1em;
+            }
+
+            .number-container {
+                grid-area: a;
+                padding: 2em; /* Ajustez selon vos besoins */
+            }
+
+            #genderChartParent {
+                grid-area: b;
+                padding: 10px; /* Ajustez selon vos besoins */
+
+            }
+
+            #yearChartParent {
+                grid-area: c;
+                padding: 10px; /* Ajustez selon vos besoins */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+        }
+
+
+        @media only screen and (max-width: 1024px) {
+            #yearChartParent {
+                margin-top:0.5em;
+                padding-top:0.5em;
+                border-top:2px dotted #CCC;
+                min-height:20em;
+            }
+        }
+
+        .header {
+            position: absolute;
+            top: -14px;
+            left: 30%;
+            transform: translateX(-20%);
+            background-color: #fff;
+            padding: 0 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #444;
+        }
+        h1 {
+            border-top:1px solid #CCC;
+            padding-top:0.2em;
+            margin-top:0.2em;
+        }
+    </style>
+{% endblock %}
+{% block javascripts %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const genderChart = document.getElementById('genderChart');
+
+        new Chart(genderChart, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for gender in genderGap %}'{{ gender.genderLabel }}'{% if not loop.last %},{% endif %} {% endfor %}],
+                datasets: [{
+                    label: 'nombre de personnes',
+                    data: [{% for gender in genderGap %}{{ gender.nb }}{% if not loop.last %},{% endif %} {% endfor %}],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: "Répartition par genre"
+                    }
+                }
+            }
+        });
+
+        const yearChart = document.getElementById('yearChart');
+
+        const data = {
+            labels: [{% for year in years %}'{{ year }}'{% if not loop.last %},{% endif %} {% endfor %}],
+            datasets: [
+                {% for gender, stats in yearStats %}
+                {
+                    label: '{{  gender }}',
+                    data: [{% for year, nb in stats %} {{nb}}{% if not loop.last %}, {% endif %}{% endfor %}]
+                }{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            ]
+        };
+
+        new Chart(yearChart, {
+            type: 'bar',
+            data: data,
+            options: {
+                scales: {
+                    x: {
+                        stacked: true,
+                    },
+                    y: {
+                        stacked: true
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: "Attributions par année et par genre"
+                    }
+                }
+
+            }
+        });
+
+    </script>
+{% endblock %}
+
 {% block body %}
-    <ul>
-    {% for university in universities %}
-        <li><a href="{{ url("app_university", {qid: university.qid, slug: university.label|slug}) }}">{{ university.label }}</a></li>
-    {% endfor %}
-    </ul>
+
+    <div class="container">
+        <div class="number-container">
+            <div class="header">Doctorats dans la base</div>
+            <div class="number">{{ countDhc }}</div>
+        </div>
+        <div id="genderChartParent">
+            <canvas id="genderChart"></canvas>
+        </div>
+        <div id="yearChartParent">
+            <canvas id="yearChart"></canvas>
+        </div>
+    </div>
+
+    <h1>Attributions par université</h1>
+    <table>
+        <thead>
+        <tr>
+            <th>Décerné par</th>
+            <th>Titulaires du doctorat</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for university in universities %}
+
+            <tr>
+                <td>
+                    <a href="{{ url("app_university", {qid: university.qid, slug: university.label|slug}) }}">{{ university.label }}</a>
+                </td>
+                <td>{{ university.doctorate.awards|length }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

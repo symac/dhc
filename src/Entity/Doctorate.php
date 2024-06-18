@@ -70,7 +70,13 @@ class Doctorate
     {
         // Sort by displayDate
         $iterator = $this->awards->getIterator();
-        $iterator->uasort(fn (Award $a, Award $b) => $a->getDisplayDate() <=> $b->getDisplayDate());
+        $iterator->uasort(function ($a, $b) {
+            if ($a->getDisplayDate() === $b->getDisplayDate()) {
+                return $a->getPerson()->getLabel() <=> $b->getPerson()->getLabel();
+            }
+
+            return $a->getDisplayDate() <=> $b->getDisplayDate();
+        });
         // Return a new ArrayCollection
         return new ArrayCollection(iterator_to_array($iterator));
     }
