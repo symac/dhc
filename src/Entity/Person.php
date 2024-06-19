@@ -141,7 +141,7 @@ class Person
         $filenameUnderscores = str_replace(' ', '_', $filenameUnderscores);
         $filenameUnderscores = urldecode($filenameUnderscores);
         $md5 = md5($filenameUnderscores);
-        return sprintf(
+        $output = sprintf(
             'https://upload.wikimedia.org/wikipedia/commons/thumb/%s/%s/%s/%spx-%s',
             substr($md5, 0, 1),
             substr($md5, 0, 2),
@@ -149,6 +149,11 @@ class Person
             $width,
             $filenameUnderscores
         );
+
+        if (!str_ends_with($output, '.jpg')) {
+            $output .= '.jpg';
+        }
+        return $output;
     }
 
     public function getCommonsUrl(): ?string {
