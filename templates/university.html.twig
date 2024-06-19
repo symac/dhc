@@ -21,8 +21,7 @@
             background-image: url("{{ asset("favicon.svg") }}");
             background-size: 2em;
             background-position: 1em;
-            background-color: yellow;
-            color: black;
+            background-color: #FFEB3B;
         }
 
         .personName {
@@ -41,6 +40,10 @@
                 grid-auto-flow: row;
             }
         }
+
+        .genderIcon {
+            font-size:1.4em;
+        }
     </style>
 {% endblock %}
 
@@ -54,8 +57,10 @@
             type: 'doughnut',
             data: {
                 labels: [{% for gender in genderGap %}'{{ gender.genderLabel }}'{% if not loop.last %},{% endif %} {% endfor %}],
+                color: ['#FF0000', '#FF0000'],
                 datasets: [{
                     label: 'nombre de personnes',
+                    backgroundColor: [{% for gender in genderGap %}'{{ gender.genderColour }}'{% if not loop.last %},{% endif %} {% endfor %}],
                     data: [{% for gender in genderGap %}{{ gender.nb }}{% if not loop.last %},{% endif %} {% endfor %}],
                     borderWidth: 1
                 }]
@@ -105,7 +110,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        {{ award.person.displayGender }}
+                        <span class="genderIcon">{{ award.person.displayGender }}</span>
                         {% if award.person.displayGender == "?" %}<br/><a href="https://www.wikidata.org/wiki/{{ award.person.qid }}">✎</a>{% endif %}
                     </td>
                     <td>
@@ -138,4 +143,8 @@
             {% endfor %}
             </tbody>
         </table>
+
+        <div style="text-align: center;">
+            <small><a rel="nofollow" href="{{ url("app_university_refresh", {qid: university.qid, slug: university.label|slug}) }}">Rafraichir depuis wikidata</a></small>
+        </div>
     {% endblock %}

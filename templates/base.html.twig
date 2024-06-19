@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta property="og:title" content="Base de données des doctorats Honoris Causa en France">
     <meta property="og:type" content="website">
-    <link rel="icon" href="/favicon.svg">
+    <link rel="icon" href="{{ asset("favicon.svg") }}">
     <link
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.classless.min.css"
@@ -35,16 +35,37 @@
         header > h1 > a:hover {
             text-decoration: underline;
         }
+
+        .alert {
+            position: relative;
+            padding: .75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: .25rem;
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
     </style>
     {% block stylesheets %}
     {% endblock %}
 </head>
 <body>
 <header>
-    <h1><a href="{{ url("app_index") }}"><img src="{{ asset("favicon.svg") }}"/>Doctorats honoris Causa en France</a>
+    <h1><a href="{{ url("app_index") }}"><img alt="icône couvre-chef doctorant.e" src="{{ asset("favicon.svg") }}"/>Doctorats honoris Causa en France</a>
     </h1>
 </header>
 <main>
+    {% if app.flashes is defined %}
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ type }}">{{ message|raw }}</div>
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
     {% block body %}{% endblock %}
 </main>
 </body>

@@ -63,22 +63,25 @@ class PersonRepository extends ServiceEntityRepository
             }
 
             if ($row['gender'] == "") {
-                $row['gender'] = "genre non spécifié sur wikidata";
+                $row['genderLabel'] = IndexController::genderMapLabel(null);
+                $row["genderColour"] = IndexController::genderMapColour(null);
             } else {
-                $row["gender"] = IndexController::genderMap($row['gender']);
+                $row["genderLabel"] = IndexController::genderMapLabel($row['gender']);
+                $row["genderColour"] = IndexController::genderMapColour($row['gender']);
             }
 
-            $yearStats[$row['gender']][$row['year']] = $row['nb'];
+            $yearStats[$row['genderLabel']]["stats"][$row['year']] = $row['nb'];
+            $yearStats[$row['genderLabel']]["colour"] = $row['genderColour'];
             $years[$row['year']] = $row['year'];
         }
 
         foreach ($yearStats as $key => $value) {
             foreach ($years as $year) {
-                if (!isset($yearStats[$key][$year])) {
-                    $yearStats[$key][$year] = 0;
+                if (!isset($yearStats[$key]["stats"][$year])) {
+                    $yearStats[$key]["stats"][$year] = 0;
                 }
 
-                ksort($yearStats[$key]);
+                ksort($yearStats[$key]["stats"]);
             }
         }
 

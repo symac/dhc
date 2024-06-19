@@ -31,6 +31,12 @@ class Award
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $displayDate = null;
 
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $creationDate = null;
+
+    public function __construct() {
+        $this->creationDate = new \DateTimeImmutable();
+    }
     public function getId(): ?int
     {
         return $this->id;
@@ -92,6 +98,18 @@ class Award
     public function setDisplayDate(?\DateTimeInterface $displayDate): static
     {
         $this->displayDate = $displayDate;
+
+        return $this;
+    }
+
+    public function getCreationDate(): ?\DateTimeInterface
+    {
+        return $this->creationDate;
+    }
+
+    public function setCreationDate(?\DateTimeInterface $creationDate): static
+    {
+        $this->creationDate = $creationDate;
 
         return $this;
     }

@@ -94,6 +94,7 @@
                 datasets: [{
                     label: 'nombre de personnes',
                     data: [{% for gender in genderGap %}{{ gender.nb }}{% if not loop.last %},{% endif %} {% endfor %}],
+                    backgroundColor: [{% for gender in genderGap %}'{{ gender.genderColour }}'{% if not loop.last %},{% endif %} {% endfor %}],
                     borderWidth: 1
                 }]
             },
@@ -115,7 +116,8 @@
                 {% for gender, stats in yearStats %}
                 {
                     label: '{{  gender }}',
-                    data: [{% for year, nb in stats %} {{nb}}{% if not loop.last %}, {% endif %}{% endfor %}]
+                    data: [{% for year, nb in stats["stats"] %} {{nb}}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: '{{stats["colour"]}}'
                 }{% if not loop.last %}, {% endif %}
                 {% endfor %}
             ]

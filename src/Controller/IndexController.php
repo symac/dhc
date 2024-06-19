@@ -5,8 +5,10 @@ namespace App\Controller;
 use App\Entity\Award;
 use App\Entity\Person;
 use App\Entity\University;
+use App\Service\WikidataHarvester;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -18,11 +20,12 @@ class IndexController extends AbstractController
             $total += $gender["nb"];
         };
         foreach ($genderGap as $id => $gender) {
-            $genderGap[$id]["genderLabel"] = $this->genderMap($gender["gender"])." (".sprintf("%0.2f", (($gender["nb"] / $total) * 100))." %)";
+            $genderGap[$id]["genderLabel"] = $this->genderMapLabel($gender["gender"])." (".sprintf("%0.2f", (($gender["nb"] / $total) * 100))." %)";
+            $genderGap[$id]["genderColour"] = $this->genderMapColour($gender["gender"]);
         }
         return $genderGap;
     }
-    public static function genderMap($qid): string
+    public static function genderMapLabel($qid): string
     {
         if (is_null($qid)) {
             return "genre non spécifié sur wikidata";
@@ -33,6 +36,22 @@ class IndexController extends AbstractController
         } elseif ($qid == "Q6581097") {
             return "masculin";
         }
+
+        return "genre inconnu (".$qid.")";
+    }
+
+    public static function genderMapColour($qid): string
+    {
+        if (is_null($qid)) {
+            return "#CCC";
+        } elseif ($qid == "Q48270") {
+            return "#3c7272";
+        } elseif ($qid == "Q6581072") {
+            return "#9966ff";
+        } elseif ($qid == "Q6581097") {
+            return "#ff9f40";
+        }
+        return "#CCC";
     }
 
     #[Route('/', name: 'app_index')]
@@ -46,10 +65,9 @@ class IndexController extends AbstractController
         $countDhc = $entityManager->getRepository(Award::class)->count();
         $years = [];
         foreach ($yearStats as $gender => $stats) {
-            foreach ($stats as $year => $value) {
+            foreach ($stats["stats"] as $year => $value) {
                 $years[$year] = $year;
             }
-
         }
 
         return $this->render('index.html.twig', [
@@ -77,6 +95,21 @@ class IndexController extends AbstractController
             'genderGap' => $genderGap,
         ]);
     }
+
+    #[Route('/etablissement/{qid}-{slug}/refresh', name: 'app_university_refresh')]
+    public function universityRefresh(string $qid, string $slug, EntityManagerInterface $entityManager, WikidataHarvester $wikidataHarvester): Response
+    {
+        $university = $entityManager->getRepository(University::class)->findOneByQid($qid);
+
+        $wikidataHarvester->setSparqlUniversity($university);
+        $countCreate = $wikidataHarvester->run();
+
+        $this->addFlash('success', "Mise à jour effectuée avec succès. Si vous avez fait récemment des modifications sur wikidata non reflétées ici, c'est peut-être lié au délai de mise à jour du serveur SPARQL de wikidata. Réessayer d'ici quelques minutes.");
+
+        return $this->redirectToRoute('app_university', ['qid' => $qid, 'slug' => $slug]);
+    }
+
+
 
     #[Route('/personne/{qid}-{slug}', name: 'app_person')]
     public function person(string $qid, EntityManagerInterface $entityManager): Response
