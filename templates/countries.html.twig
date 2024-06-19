@@ -1,0 +1,27 @@
+{% extends "base.html.twig" %}
+
+{% block stylesheets %}
+{% endblock %}
+
+{% block javascripts %}
+{% endblock %}
+
+{% block body %}
+    <h1>Personnes récompensées par pays de citoyenneté</h1>
+    <table class="sortable">
+        <thead>
+        <tr>
+            <th>Pays</th>
+            <th>Nombre de personnes promues</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for country in countries %}
+            <tr>
+                <td><a href="{{ url("app_country_detail", {qid: country.qid, slug: country.label|slug}) }}">{{ country.label }}</a></td>
+                <td>{{ country.persons|length }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -3,10 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\Award;
+use App\Entity\Country;
 use App\Entity\Person;
 use App\Entity\University;
 use App\Service\WikidataHarvester;
 use Doctrine\ORM\EntityManagerInterface;
+use EasyRdf\Sparql\Client;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
@@ -96,6 +98,24 @@ class IndexController extends AbstractController
         ]);
     }
 
+    #[Route('/pays', name: 'app_countries')]
+    public function countries(EntityManagerInterface $entityManager) {
+        $countries = $entityManager->getRepository(Country::class)->findAll();
+        return $this->render('countries.html.twig', [
+            'countries' => $countries,
+        ]);
+    }
+
+    #[Route('/pays/{slug}/{qid}', name: 'app_country_detail')]
+    public function country(EntityManagerInterface $entityManager, string $qid): Response {
+        $country = $entityManager->getRepository(Country::class)->findCountryWithDetail($qid);
+        return $this->render('country.html.twig', [
+            'country' => $country,
+        ]);
+    }
+
+
+
     #[Route('/refresh-all', name: 'app_refresh_all')]
     public function refreshAll(WikidataHarvester $wikidataHarvester): Response {
         $wikidataHarvester->setSparqlGlobal();
@@ -134,6 +154,64 @@ class IndexController extends AbstractController
             'person' => $person,
         ]);
     }
+
+    #[Route('/update-countries', name: 'app_update_countries')]
+    public function updateCountries(EntityManagerInterface $entityManager): Response {
+        $sparql = new Client("https://query.wikidata.org/sparql");
+        $result = $sparql->query('SELECT ?person ?country ?countryLabel
+        WHERE
+        {
+          ?doctorate wdt:P279 wd:Q11415564.
+          ?doctorate wdt:P17 wd:Q142.
+        
+          ?person p:P166 ?award.
+          ?award ps:P166 ?doctorate .
+          ?person wdt:P27 ?country
+          MINUS {
+            ?person wdt:P27 ?country .
+            FILTER wikibase:isSomeValue(?country)
+          }
+          SERVICE wikibase:label { bd:serviceParam wikibase:language "fr,en". }
+        }');
+        $persons = $entityManager->getRepository(Person::class)->findAll();
+        $existingPersons = [];
+        foreach ($persons as $person) {
+            $existingPersons[$person->getQid()] = $person;
+        }
+
+        $countries = $entityManager->getRepository(Country::class)->findAll();
+        $existingCountries = [];
+        foreach ($countries as $country) {
+            $existingCountries[$country->getQid()] = $country;
+        }
+
+        foreach ($result as $row) {
+            $row->person = str_replace("http://www.wikidata.org/entity/", "", $row->person);
+            $row->country = str_replace("http://www.wikidata.org/entity/", "", $row->country);
+            $row->countryLabel = (string) $row->countryLabel;
+
+            if (!isset($existingCountries[$row->country])) {
+                $country = new Country();
+                $country->setQid($row->country);
+                $country->setLabel($row->countryLabel);
+                $entityManager->persist($country);
+
+                $existingCountries[$row->country] = $country;
+            } else {
+                $country = $existingCountries[$row->country];
+            }
+
+            $person = $existingPersons[$row->person];
+            $countCountries = $person->getCountries()->count();
+            $person->addCountry($country);
+            if ($countCountries != $person->getCountries()->count()) {
+                $entityManager->persist($person);
+            }
+        }
+        $entityManager->flush();
+        return new Response("Mise à jour ok");
+    }
+
 
     // Créer une route pour nettoyer le cache ( clear cache )
     #[Route('/clear-cache', name: 'app_clear_cache')]

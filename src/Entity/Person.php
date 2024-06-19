@@ -52,9 +52,16 @@ class Person
     #[ORM\Column(length: 512, nullable: true)]
     private ?string $description = null;
 
+    /**
+     * @var Collection<int, Country>
+     */
+    #[ORM\ManyToMany(targetEntity: Country::class, inversedBy: 'persons')]
+    private Collection $countries;
+
     public function __construct()
     {
         $this->awards = new ArrayCollection();
+        $this->countries = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -248,6 +255,30 @@ class Person
     public function setDescription(?string $description): static
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Country>
+     */
+    public function getCountries(): Collection
+    {
+        return $this->countries;
+    }
+
+    public function addCountry(Country $country): static
+    {
+        if (!$this->countries->contains($country)) {
+            $this->countries->add($country);
+        }
+
+        return $this;
+    }
+
+    public function removeCountry(Country $country): static
+    {
+        $this->countries->removeElement($country);
 
         return $this;
     }

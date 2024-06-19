@@ -1,0 +1,78 @@
+{% extends "base.html.twig" %}
+
+{% block stylesheets %}
+    <style>
+        img.wd-logo {
+            height: 1em;
+        }
+    </style>
+
+{% endblock %}
+    {% block body %}
+        <h2><a href="{{ url('app_countries') }}">Pays</a> > {{ country.label }}</h2>
+        <p>{{ country.persons|length }} personnes ayant pour pays de citoyenneté &laquo;&nbsp;{{ country.label }}&nbsp;&raquo;
+            ont reçu
+            un doctorat honoris causa de la part d'un établissement français.</p>
+
+        <table class="sortable">
+            <thead>
+            <tr>
+                <th>Personnalité</th>
+                <th>Genre</th>
+                <th style="max-width:10em" class="no-sort">Image</th>
+                <th>Doctorats</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for person in country.persons %}
+                <tr>
+                    <td>
+                        {{ person.label }}
+                        <a href="https://www.wikidata.org/wiki/{{ person.qid }}">
+                            <img class="wd-logo" src="{{ asset("wikidata-logo.svg") }}"/></a>
+                    </td>
+                    <td data-sort="{{ person.gender }}">
+                        <span class="genderIcon">{{ person.displayGender }}</span>
+                        {% if person.displayGender == "?" %}<br/><a
+                                href="https://www.wikidata.org/wiki/{{ person.qid }}">✎</a>{% endif %}
+                    </td>
+                    <td style="max-width:12em">
+                        {% if person.image is not null %}
+                            <a href="{{ person.commonsUrl }}">
+                                <img src="{{ person.imageThumbnailUrl }}"
+                                     alt="photo de {{ person.label }}"/>
+                            </a><br/>
+                            <small>{{ person.imageLicense }} - {{ person.imageCreator|raw }}</small>
+                        {% else %}
+                            <img src="{{ asset("blank_person_placeholder.svg") }}" alt="pas de photo disponible"/>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if person.awards|length > 1 %}
+                        <ul>
+                            {% endif %}
+                            {% for award in person.awards %}
+                                {% if person.awards|length > 1 %}<li>{% endif %}
+
+                                {% if award.displayDate is not null %}
+                                    {{ award.displayDate | date("Y") }}
+                                {% else %}
+                                    [date inconnue]
+                                {% endif %} :
+                                {% if award.doctorate.university is null %}
+                                    <strong style="color:red">erreur</strong>
+                                {% else %}
+                                    <a href="{{ url("app_university", {qid: award.doctorate.university.qid, slug: award.doctorate.university.label|slug}) }}">{{ award.doctorate.university.label }}</a>
+                                {% endif %}
+
+                                {% if person.awards|length > 1 %}</li>{% endif %}
+                            {% endfor %}
+                            {% if person.awards|length > 1 %}
+                        </ul>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endblock %}
