@@ -49,6 +49,39 @@
             background-color: #d4edda;
             border-color: #c3e6cb;
         }
+
+        .sortable thead th:not(.no-sort) {
+            cursor: pointer;
+        }
+        .sortable thead th:not(.no-sort)::after, .sortable thead th:not(.no-sort)::before {
+            transition: color 0.1s ease-in-out;
+            font-size: 1.2em;
+            color: transparent;
+        }
+        .sortable thead th:not(.no-sort)::after {
+            margin-left: 3px;
+            content: "⇅";
+        }
+        .sortable thead th:not(.no-sort):hover::after {
+            color: inherit;
+        }
+        .sortable thead th:not(.no-sort)[aria-sort=descending]::after {
+            color: inherit;
+            content: "↑";
+        }
+        .sortable thead th:not(.no-sort)[aria-sort=ascending]::after {
+            color: inherit;
+            content: "↓";
+        }
+
+        .sortable {
+            --stripe-color: #e4e4e4;
+            --th-color: #fff;
+            --th-bg: #808080;
+            --td-color: #000;
+            --td-on-stripe-color: #000;
+            border-spacing: 0;
+        }
     </style>
     {% block stylesheets %}
     {% endblock %}
@@ -72,4 +105,6 @@
 
 {% block javascripts %}
 {% endblock %}
+<script src="https://cdn.jsdelivr.net/gh/tofsjonas/sortable@latest/sortable.min.js"></script>
+
 </html>

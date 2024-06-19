@@ -90,12 +90,12 @@
                 <canvas id="genderChart"></canvas>
             </div>
         </div>
-        <table>
+        <table class="sortable">
             <thead>
             <tr>
-                <th>Année</th>
+                <th aria-sort="ascending">Année</th>
                 <th>Genre</th>
-                <th>Image</th>
+                <th class="no-sort">Image</th>
                 <th>Titulaire</th>
             </tr>
             </thead>
@@ -109,7 +109,7 @@
                             [date inconnue]
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-sort="{{ award.person.gender}}">
                         <span class="genderIcon">{{ award.person.displayGender }}</span>
                         {% if award.person.displayGender == "?" %}<br/><a href="https://www.wikidata.org/wiki/{{ award.person.qid }}">✎</a>{% endif %}
                     </td>
@@ -145,6 +145,6 @@
         </table>
 
         <div style="text-align: center;">
-            <small><a rel="nofollow" href="{{ url("app_university_refresh", {qid: university.qid, slug: university.label|slug}) }}">Rafraichir depuis wikidata</a></small>
+            <small>⟳&nbsp;<a rel="nofollow" href="{{ url("app_university_refresh", {qid: university.qid, slug: university.label|slug}) }}">Rafraichir depuis wikidata</a></small>
         </div>
     {% endblock %}
