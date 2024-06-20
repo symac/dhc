@@ -16,6 +16,7 @@
             text-align: center;
             border: 1px solid black;
             border-radius: 0.4em;
+            margin:0;
         }
 
         header > h1 > a > img {
@@ -82,12 +83,29 @@
             --td-on-stripe-color: #000;
             border-spacing: 0;
         }
+
+        #about {
+            text-align:right;
+            padding:0;
+            margin:0;
+            font-size:0.8em;
+            padding-bottom:0.3em;
+        }
+
+        #about a {
+            text-decoration: none;
+        }
+
+        #about a:hover {
+            text-decoration: underline;
+        }
     </style>
     {% block stylesheets %}
     {% endblock %}
 </head>
 <body>
 <header>
+    <p id="about"><a href="https://www.wikidata.org/wiki/Wikidata:WikiProject_Honoris_Causa_France/site_web">À propos</a></p>
     <h1><a href="{{ url("app_index") }}"><img alt="icône couvre-chef doctorant.e" src="{{ asset("favicon.svg") }}"/>Doctorats honoris Causa en France</a>
     </h1>
 </header>
