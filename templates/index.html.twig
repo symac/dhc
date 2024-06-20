@@ -105,6 +105,7 @@
 
         [role="tabs"] {
             display: flex;
+            border:2px solid #666;
         }
 
         [role="tabs"] section {
@@ -134,7 +135,9 @@
 
         nav[role="tab-control"] label.active {
             font-weight: bold;
-            border: 2px solid;
+            border: 2px solid #666;
+            background-color: #666;
+            color:white;
             border-radius: 0.3em 0.3em 0 0;
             border-bottom: 0;
         }
@@ -145,10 +148,6 @@
             border-radius: 0.3em 0.3em 0 0;
             border-bottom: 0;
             color: #666;
-        }
-
-        nav {
-            border-bottom: 2px solid;
         }
 
         nav ul:first-of-type {
