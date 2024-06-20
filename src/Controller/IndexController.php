@@ -203,6 +203,15 @@ class IndexController extends AbstractController
                 $country = $existingCountries[$row->country];
             }
 
+            if (isset($row->finalFlag)) {
+                $row->finalFlag = str_replace("http://commons.wikimedia.org/wiki/Special:FilePath/", "", $row->finalFlag);
+                if ($country->getFlag() != $row->finalFlag) {
+                    $country->setFlag($row->finalFlag);
+                    $entityManager->persist($country);
+                    $existingCountries[$row->country] = $country;
+                }
+            }
+
             $person = $existingPersons[$row->person];
             $countCountries = $person->getCountries()->count();
             $person->addCountry($country);

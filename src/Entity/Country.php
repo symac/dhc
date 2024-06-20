@@ -27,6 +27,9 @@ class Country
     #[ORM\ManyToMany(targetEntity: Person::class, mappedBy: 'countries')]
     private Collection $persons;
 
+    #[ORM\Column(length: 512, nullable: true)]
+    private ?string $flag = null;
+
     public function __construct()
     {
         $this->persons = new ArrayCollection();
@@ -86,6 +89,18 @@ class Country
         if ($this->persons->removeElement($person)) {
             $person->removeCountry($this);
         }
+
+        return $this;
+    }
+
+    public function getFlag(): ?string
+    {
+        return $this->flag;
+    }
+
+    public function setFlag(?string $flag): static
+    {
+        $this->flag = $flag;
 
         return $this;
     }
