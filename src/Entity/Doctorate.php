@@ -125,4 +125,27 @@ class Doctorate
         return $this;
     }
 
+    public function percent(string $qid = null) {
+        // Q6581072 : féminin
+        // Q6581097 : masculin
+        $total = 0;
+        $match = 0;
+
+        foreach ($this->awards as $award) {
+            if ( ($award->getPerson()->getGender() == "Q6581072") or ($award->getPerson()->getGender() == "Q6581097") ) {
+                $total++;
+                if ($award->getPerson()->getGender() == $qid) {
+                    $match++;
+                }
+            } elseif (is_null($award->getPerson()->getGender()) && is_null($qid)) {
+                $match++;
+            }
+        }
+        if (is_null($qid)) {
+            return $match;
+        }
+
+        return floor(($match/$total) * 100);
+    }
+
 }

@@ -6,7 +6,7 @@
             position: relative;
             display: inline-block;
             padding: 20px;
-            width:100%;
+            width: 100%;
             border: 3px solid #444;
             border-radius: 10px;
             background-color: #fff;
@@ -21,7 +21,7 @@
                 grid-template-rows: auto auto;
                 grid-template-areas:
         "a c"
-        "b c" ;
+        "b c";
                 gap: 1em;
             }
 
@@ -50,10 +50,10 @@
 
         @media only screen and (max-width: 1024px) {
             #yearChartParent {
-                margin-top:0.5em;
-                padding-top:0.5em;
-                border-top:2px dotted #CCC;
-                min-height:20em;
+                margin-top: 0.5em;
+                padding-top: 0.5em;
+                border-top: 2px dotted #CCC;
+                min-height: 20em;
             }
         }
 
@@ -74,10 +74,29 @@
             font-weight: bold;
             color: #444;
         }
+
         h1 {
-            border-top:1px solid #CCC;
-            padding-top:0.2em;
-            margin-top:0.2em;
+            padding-top: 0.2em;
+            margin-top: 0.2em;
+        }
+
+        .genderGradient {
+            border-radius: 0.8em;
+            height: 0.5em;
+        }
+
+        .countTitulaires {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .unspecifiedGender {
+            font-size: 0.6em;
+            border: 1px solid #CCC;
+            margin-top: 0.2em;
+            border-radius: 0.3em;
+            padding: 0;
         }
     </style>
 {% endblock %}
@@ -115,9 +134,9 @@
             datasets: [
                 {% for gender, stats in yearStats %}
                 {
-                    label: '{{  gender }}',
-                    data: [{% for year, nb in stats["stats"] %} {{nb}}{% if not loop.last %}, {% endif %}{% endfor %}],
-                    backgroundColor: '{{stats["colour"]}}'
+                    label: '{{ gender }}',
+                    data: [{% for year, nb in stats["stats"] %} {{ nb }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: '{{ stats["colour"] }}'
                 }{% if not loop.last %}, {% endif %}
                 {% endfor %}
             ]
@@ -170,7 +189,7 @@
         <thead>
         <tr>
             <th aria-sort="ascending">Décerné par</th>
-            <th>Titulaires du doctorat</th>
+            <th class="countTitulaires">Titulaires du doctorat</th>
         </tr>
         </thead>
         <tbody>
@@ -180,7 +199,24 @@
                 <td>
                     <a href="{{ url("app_university", {qid: university.qid, slug: university.label|slug}) }}">{{ university.label }}</a>
                 </td>
-                <td>{{ university.doctorate.awards|length }}</td>
+                <td class="countTitulaires">
+                    {{ university.doctorate.awards|length }}
+                    <div class='genderGradient'
+                         title="{{ university.doctorate.percent("Q6581097") }}% d'hommes, {{ university.doctorate.percent("Q6581072") }}% de femmes"
+                            {% if university.doctorate.percent("Q6581097") == 0 %}
+                         style="background: {{ colorFemale }}">
+                        {% else %}
+                            style="background: linear-gradient(90deg, {{ colorMale }} {{ university.doctorate.percent("Q6581097") }}%, {{ colorFemale }} {{ university.doctorate.percent("Q6581072") }}%)">
+                        {% endif %}
+                    </div>
+                    {% if university.doctorate.percent() == 1 %}
+                        <p class="unspecifiedGender">+ {{ university.doctorate.percent() }} genre non spécifié sur
+                            wikidata</p>
+                    {% elseif university.doctorate.percent() > 1 %}
+                        <p class="unspecifiedGender">+ {{ university.doctorate.percent() }} genres non spécifiés sur
+                            wikidata</p>
+                    {% endif %}
+                </td>
             </tr>
         {% endfor %}
         </tbody>

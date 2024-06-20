@@ -78,6 +78,8 @@ class IndexController extends AbstractController
             'yearStats' => $yearStats,
             'years' => $years,
             'countDhc' => $countDhc,
+            'colorMale' => $this::genderMapColour("Q6581097"),
+            'colorFemale' => $this::genderMapColour("Q6581072"),
         ]);
     }
 

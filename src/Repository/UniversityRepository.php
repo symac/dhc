@@ -36,7 +36,7 @@ class UniversityRepository extends ServiceEntityRepository
             ->leftJoin('u.doctorate', 'd')
             ->leftJoin('d.awards', 'a')
             ->leftJoin('a.person', 'p')
-            ->orderBy('u.label', 'ASC')
+            ->orderBy('UPPER(u.label)', 'ASC')
             ->getQuery()
             ->getResult();
     }
