@@ -2,17 +2,10 @@
 
 namespace App\Command;
 
-use App\Entity\Award;
-use App\Entity\Doctorate;
-use App\Entity\Person;
-use App\Entity\University;
 use App\Service\WikidataHarvester;
 use Doctrine\ORM\EntityManagerInterface;
-use EasyRdf\Sparql\Client;
-use PhpParser\ErrorHandler\Collecting;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;

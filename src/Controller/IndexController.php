@@ -13,6 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use function Symfony\Component\String\u;
 
 class IndexController extends AbstractController
 {
@@ -60,6 +61,7 @@ class IndexController extends AbstractController
     public function index(EntityManagerInterface $entityManager): Response
     {
         $universities = $entityManager->getRepository(University::class)->findAllForIndex();
+
         $genderGap = $entityManager->getRepository(Person::class)->getGenderStats();
         $genderGap = $this->enrichGenderGapResult($genderGap);
 
@@ -72,6 +74,19 @@ class IndexController extends AbstractController
             }
         }
 
+        $countries = $entityManager->getRepository(Country::class)->findAll();
+        // Serait mieux de faire directement ces tris au niveau de la base de données
+        // mais pas trouvé de solution simple sous SQLite.
+        uasort($countries, function ($a, $b) {
+            return strcmp(u($a->getLabel())->ascii()->upper(), u($b->getLabel())->ascii()->upper());
+        });
+
+        uasort($universities, function ($a, $b) {
+            return strcmp(u($a->getLabel())->ascii()->upper(), u($b->getLabel())->ascii()->upper());
+        });
+
+
+
         return $this->render('index.html.twig', [
             'universities' => $universities,
             'genderGap' => $genderGap,
@@ -80,6 +95,7 @@ class IndexController extends AbstractController
             'countDhc' => $countDhc,
             'colorMale' => $this::genderMapColour("Q6581097"),
             'colorFemale' => $this::genderMapColour("Q6581072"),
+            'countries' => $countries
         ]);
     }
 
@@ -97,14 +113,6 @@ class IndexController extends AbstractController
         return $this->render('university.html.twig', [
             'university' => $university,
             'genderGap' => $genderGap,
-        ]);
-    }
-
-    #[Route('/pays', name: 'app_countries')]
-    public function countries(EntityManagerInterface $entityManager) {
-        $countries = $entityManager->getRepository(Country::class)->findAll();
-        return $this->render('countries.html.twig', [
-            'countries' => $countries,
         ]);
     }
 
@@ -160,7 +168,7 @@ class IndexController extends AbstractController
     #[Route('/update-countries', name: 'app_update_countries')]
     public function updateCountries(EntityManagerInterface $entityManager): Response {
         $sparql = new Client("https://query.wikidata.org/sparql");
-        $result = $sparql->query('SELECT ?person ?country ?countryLabel
+        $result = $sparql->query('SELECT ?person ?country ?countryLabel (MIN(?flag) AS ?finalFlag)
         WHERE
         {
           ?doctorate wdt:P279 wd:Q11415564.
@@ -173,8 +181,12 @@ class IndexController extends AbstractController
             ?person wdt:P27 ?country .
             FILTER wikibase:isSomeValue(?country)
           }
+          OPTIONAL {
+            ?country wdt:P41 ?flag
+          }
           SERVICE wikibase:label { bd:serviceParam wikibase:language "fr,en". }
-        }');
+        }
+        GROUP BY  ?person ?country ?countryLabel');
         $persons = $entityManager->getRepository(Person::class)->findAll();
         $existingPersons = [];
         foreach ($persons as $person) {

@@ -9,7 +9,7 @@
 
 {% endblock %}
     {% block body %}
-        <h2><a href="{{ url('app_countries') }}">Pays</a> > {{ country.label }}</h2>
+        <h2>{{ country.label }}</h2>
         <p>{{ country.persons|length }} personnes ayant pour pays de citoyenneté &laquo;&nbsp;{{ country.label }}&nbsp;&raquo;
             ont reçu
             un doctorat honoris causa de la part d'un établissement français.</p>
@@ -60,7 +60,7 @@
                                     [date inconnue]
                                 {% endif %} :
                                 {% if award.doctorate.university is null %}
-                                    <strong style="color:red">erreur</strong>
+                                    <span style="color:rgba(255,0,0,0.77)">erreur dans la base de données</span>
                                 {% else %}
                                     <a href="{{ url("app_university", {qid: award.doctorate.university.qid, slug: award.doctorate.university.label|slug}) }}">{{ award.doctorate.university.label }}</a>
                                 {% endif %}

@@ -85,7 +85,11 @@
             height: 0.5em;
         }
 
-        .countTitulaires {
+        th.countTitulaires {
+            text-align: center;
+        }
+
+        td.countTitulaires {
             text-align: center;
             font-size: 1.2em;
             font-weight: bold;
@@ -98,6 +102,77 @@
             border-radius: 0.3em;
             padding: 0;
         }
+
+        [role="tabs"] {
+            display: flex;
+        }
+
+        [role="tabs"] section {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        [role="tabs"] figure {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        [role="tabs"] [type="radio"]:checked + figure {
+            display: block;
+        }
+
+        nav {
+            margin-top: 0.5em;
+        }
+
+        nav[role="tab-control"] label {
+            cursor: pointer;
+        }
+
+        nav[role="tab-control"] label.active {
+            font-weight: bold;
+            border: 2px solid;
+            border-radius: 0.3em 0.3em 0 0;
+            border-bottom: 0;
+        }
+
+        nav[role="tab-control"] label.inactive {
+            border: 2px solid;
+            border-color: #AAA;
+            border-radius: 0.3em 0.3em 0 0;
+            border-bottom: 0;
+            color: #666;
+        }
+
+        nav {
+            border-bottom: 2px solid;
+        }
+
+        nav ul:first-of-type {
+            margin-left: 0;
+        }
+
+        nav li {
+            padding: 0;
+            padding: 0;
+        }
+
+        nav li label {
+            margin: 0;
+            padding: 0 0.3em;
+        }
+
+        .tabContexte {
+            font-style: italic;
+            border:1px solid #CCC;
+            border-top:0;
+            font-size:0.8em;
+            padding:0.5em;
+        }
+
     </style>
 {% endblock %}
 {% block javascripts %}
@@ -166,6 +241,33 @@
             }
         });
 
+        const nodeList = document.querySelectorAll('nav[role="tab-control"] label');
+        const eventListenerCallback = setActiveState.bind(null, nodeList);
+
+
+        nodeList.forEach((node) => {
+            node.addEventListener("click", eventListenerCallback);
+            /** add click event listener to all nodes */
+            node.classList.add('inactive');
+        });
+
+        nodeList[0].classList.add('active');
+        /** add active class to first node  */
+        nodeList[0].classList.remove('inactive'); /** add active class to first node  */
+
+        /** the click handler */
+        function setActiveState(nodeList, event) {
+            nodeList.forEach((node) => {
+                node.classList.remove("active");
+                /** remove active class from all nodes */
+                node.classList.add("inactive"); /** remove active class from all nodes */
+
+            });
+            event.target.classList.add("active"); /* set active class on current node */
+            event.target.classList.remove("inactive"); /* set active class on current node */
+
+        }
+
     </script>
 {% endblock %}
 
@@ -184,41 +286,93 @@
         </div>
     </div>
 
-    <h1>Attributions par établissement</h1>
-    <table class="sortable">
-        <thead>
-        <tr>
-            <th aria-sort="ascending">Décerné par</th>
-            <th class="countTitulaires">Titulaires du doctorat</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for university in universities %}
+    <div class="container2">
+        <nav role="tab-control">
+            <ul>
+                <li>Par&nbsp;:&nbsp;</li>
+                <li><label for="tab1">établissement</label></li>
+                <li><label for="tab2">pays</label></li>
+                <li><label for="tab3">occupation</label></li>
+            </ul>
+        </nav>
+        <div role="tabs">
+            <section>
+                <input hidden="hidden" type="radio" name="tabs" id="tab1" checked="checked"/>
+                <figure>
+                    <table class="sortable">
+                        <thead>
+                        <tr>
+                            <th aria-sort="ascending">Décerné par</th>
+                            <th class="countTitulaires">Titulaires du doctorat</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for university in universities %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url("app_university", {qid: university.qid, slug: university.label|slug}) }}">{{ university.label[:1]|capitalize ~ university.label[1:] }}</a>
+                                </td>
+                                <td class="countTitulaires">
+                                    {{ university.doctorate.awards|length }}
+                                    <div class='genderGradient'
+                                         title="{{ university.doctorate.percent("Q6581097") }}% d'hommes, {{ university.doctorate.percent("Q6581072") }}% de femmes"
+                                            {% if university.doctorate.percent("Q6581097") == 0 %}
+                                         style="background: {{ colorFemale }}">
+                                        {% else %}
+                                            style="background: linear-gradient(90deg, {{ colorMale }} {{ university.doctorate.percent("Q6581097") }}%, {{ colorFemale }} {{ university.doctorate.percent("Q6581072") }}%)">
+                                        {% endif %}
+                                    </div>
+                                    {% if university.doctorate.percent() == 1 %}
+                                        <p class="unspecifiedGender">+ {{ university.doctorate.percent() }} genre non
+                                            spécifié sur
+                                            wikidata</p>
+                                    {% elseif university.doctorate.percent() > 1 %}
+                                        <p class="unspecifiedGender">+ {{ university.doctorate.percent() }} genres non
+                                            spécifiés sur
+                                            wikidata</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
 
-            <tr>
-                <td>
-                    <a href="{{ url("app_university", {qid: university.qid, slug: university.label|slug}) }}">{{ university.label }}</a>
-                </td>
-                <td class="countTitulaires">
-                    {{ university.doctorate.awards|length }}
-                    <div class='genderGradient'
-                         title="{{ university.doctorate.percent("Q6581097") }}% d'hommes, {{ university.doctorate.percent("Q6581072") }}% de femmes"
-                            {% if university.doctorate.percent("Q6581097") == 0 %}
-                         style="background: {{ colorFemale }}">
-                        {% else %}
-                            style="background: linear-gradient(90deg, {{ colorMale }} {{ university.doctorate.percent("Q6581097") }}%, {{ colorFemale }} {{ university.doctorate.percent("Q6581072") }}%)">
-                        {% endif %}
-                    </div>
-                    {% if university.doctorate.percent() == 1 %}
-                        <p class="unspecifiedGender">+ {{ university.doctorate.percent() }} genre non spécifié sur
-                            wikidata</p>
-                    {% elseif university.doctorate.percent() > 1 %}
-                        <p class="unspecifiedGender">+ {{ university.doctorate.percent() }} genres non spécifiés sur
-                            wikidata</p>
-                    {% endif %}
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+                </figure>
+
+                <input hidden="hidden" type="radio" name="tabs" id="tab2"/>
+
+                <figure>
+                    <p class="tabContexte">Les pays indiqués ici correspondent aux pays de citoyenneté (<a
+                                href="https://www.wikidata.org/wiki/Property:P27">propriété P27</a> sur wikidata)
+                        associées aux personnes ayant reçu des doctorats honoris-causa. Pour les personnes ayant changé
+                        de nationalité au cours de leur vie, l'ensemble des pays sont utilisés, sans forcément qu'ils
+                        correspondent au pays de citoyenneté au moment de la délivrance du titre.</p>
+                    <table class="sortable">
+                        <thead>
+                        <tr>
+                            <th>Pays</th>
+                            <th>Titulaires de doctorats</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for country in countries %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url("app_country_detail", {qid: country.qid, slug: country.label|slug}) }}">{{ country.label[:1]|upper ~ country.label[1:] }}</a>
+                                </td>
+                                <td>{{ country.persons|length }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </figure>
+
+                <input hidden="hidden" type="radio" name="tabs" id="tab3"/>
+
+                <figure>
+                    <p class="tabContexte">À venir.</p>
+                </figure>
+            </section>
+        </div>
+    </div>
 {% endblock %}

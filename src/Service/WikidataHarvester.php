@@ -8,6 +8,7 @@ use App\Entity\Person;
 use App\Entity\University;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyRdf\Sparql\Client;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class WikidataHarvester
@@ -30,7 +31,8 @@ class WikidataHarvester
         $this->sparql = new Client("https://query.wikidata.org/sparql");
 
         # Récupération des awards
-        $awards = $this->em->getRepository(Award::class)->findAll();
+        $awards = $this->em->getRepository(Award::class)->findAllWidthDoctorates();
+
         foreach ($awards as $award) {
             $this->existingAwards[$award->getDoctorate()->getQid()][$award->getPerson()->getQid()] = $award;
         }
@@ -73,12 +75,13 @@ class WikidataHarvester
         GROUP BY ?person ?personLabel ?personDescription ?doctorate ?doctorateLabel ?gender';
     }
 
-    public function setSparqlUniversity(University $university) {
+    public function setSparqlUniversity(University $university)
+    {
         $this->sparqlQuery = 'SELECT ?person ?personLabel ?personDescription ?doctorate ?doctorateLabel ?gender ( MIN(?P585base) AS ?P585) (MIN(?P6949base) AS ?P6949) (SAMPLE(?image) as ?image)
         WHERE
         {
           ?person p:P166 ?award.
-          ?award ps:P166 wd:'.$university->getDoctorate()->getQid().' .
+          ?award ps:P166 wd:' . $university->getDoctorate()->getQid() . ' .
           ?award ps:P166 ?doctorate .
           
           OPTIONAL {   ?award pq:P585 ?P585base }
@@ -96,11 +99,18 @@ class WikidataHarvester
     {
         $countCreate = 0;
         $sparql = new Client("https://query.wikidata.org/sparql");
-        $result = $sparql->query($this->sparqlQuery);
+        try {
+            $result = $sparql->query($this->sparqlQuery);
+        } catch (\Exception $exception) {
+            dd("Erreur de mise à jour");
+        }
 
         foreach ($result as $row) {
             $doctorateQid = str_replace("http://www.wikidata.org/entity/", "", $row->doctorate);
             $personQid = str_replace("http://www.wikidata.org/entity/", "", $row->person);
+            if (isset($row->gender)) {
+                $row->gender = str_replace("http://www.wikidata.org/entity/", "", $row->gender);
+            }
 
             $p585 = null;
             $p6949 = null;
@@ -119,7 +129,6 @@ class WikidataHarvester
                 $person = new Person();
                 $person->setQid($personQid);
                 $person->setLabel($row->personLabel);
-                $this->em->persist($person);
                 $this->existingPersons[$personQid] = $person;
             }
 
@@ -133,18 +142,23 @@ class WikidataHarvester
             }
 
             if (isset($row->personDescription)) {
-                $person->setDescription($row->personDescription);
+                if ($person->getDescription() != $row->personDescription) {
+                    $person->setDescription($row->personDescription);
+                    $this->em->persist($person);
+                }
             }
 
             if (isset($row->gender)) {
-                $person->setGender(str_replace("http://www.wikidata.org/entity/", "", $row->gender));
+                if ($person->getGender() != $row->gender) {
+                    $person->setGender($row->gender);
+                    $this->em->persist($person);
+                }
             }
+
 
             if (isset($this->existingAwards[$doctorateQid][$personQid])) {
                 $award = $this->existingAwards[$doctorateQid][$personQid];
             } else {
-
-
                 if (!isset($this->existingDoctorates[$doctorateQid])) {
                     $doctorate = new Doctorate();
                     $doctorate->setQid($doctorateQid);

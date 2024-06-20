@@ -16,6 +16,17 @@ class AwardRepository extends ServiceEntityRepository
         parent::__construct($registry, Award::class);
     }
 
+    public function findAllWidthDoctorates(): array
+    {
+        return $this->createQueryBuilder('a')
+            ->select('a', 'd', 'p', 'u')
+            ->leftJoin('a.doctorate', 'd')
+            ->leftJoin('a.person', 'p')
+            ->leftJoin('d.university', 'u')
+            ->getQuery()
+            ->getResult();
+    }
+
     //    /**
     //     * @return Award[] Returns an array of Award objects
     //     */
