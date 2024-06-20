@@ -24,6 +24,8 @@ class WikidataHarvester
 
     private string $sparqlQuery;
 
+    private bool $isGlobal = false;
+
     public function __construct(EntityManagerInterface $entityManager, httpclientInterface $httpClient)
     {
         $this->em = $entityManager;
@@ -55,6 +57,7 @@ class WikidataHarvester
 
     public function setSparqlGlobal()
     {
+        $this->isGlobal = true;
         $this->sparqlQuery = 'SELECT ?person ?personLabel ?personDescription ?doctorate ?doctorateLabel ?gender ( MIN(?P585base) AS ?P585) (MIN(?P6949base) AS ?P6949) (SAMPLE(?image) as ?image)
         WHERE
         {
@@ -108,6 +111,7 @@ class WikidataHarvester
         foreach ($result as $row) {
             $doctorateQid = str_replace("http://www.wikidata.org/entity/", "", $row->doctorate);
             $personQid = str_replace("http://www.wikidata.org/entity/", "", $row->person);
+
             if (isset($row->gender)) {
                 $row->gender = str_replace("http://www.wikidata.org/entity/", "", $row->gender);
             }
@@ -155,9 +159,11 @@ class WikidataHarvester
                 }
             }
 
-
             if (isset($this->existingAwards[$doctorateQid][$personQid])) {
                 $award = $this->existingAwards[$doctorateQid][$personQid];
+                if ($this->isGlobal == true) {
+                    unset($this->existingAwards[$doctorateQid][$personQid]);
+                }
             } else {
                 if (!isset($this->existingDoctorates[$doctorateQid])) {
                     $doctorate = new Doctorate();
@@ -193,5 +199,18 @@ class WikidataHarvester
         $this->em->flush();
         $this->em->getRepository(Person::class)->updateCount();
         return $countCreate;
+    }
+
+    // Fonction appelée lors d'une mise à jour complète pour supprimer les awards qui ne sont plus d'actualité
+    public function removeExtra(): int {
+        $count = 0;
+        foreach ($this->existingAwards as $doctorateQid => $awards) {
+            foreach ($awards as $award) {
+                $this->em->remove($award);
+                $count++;
+            }
+        }
+        $this->em->flush();
+        return $count;
     }
 }

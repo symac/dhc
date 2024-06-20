@@ -130,8 +130,9 @@ class IndexController extends AbstractController
     public function refreshAll(WikidataHarvester $wikidataHarvester): Response {
         $wikidataHarvester->setSparqlGlobal();
         $countCreate = $wikidataHarvester->run();
+        $countDelete = $wikidataHarvester->removeExtra();
 
-        $this->addFlash('success', "Mise à jour effectuée avec succès (création de $countCreate récompenses). Si vous avez fait récemment des modifications sur wikidata non reflétées ici, c'est peut-être lié au délai de mise à jour du serveur SPARQL de wikidata. Réessayer d'ici quelques minutes.");
+        $this->addFlash('success', "Mise à jour effectuée avec succès (création de $countCreate récompenses, suppression de $countDelete suite à des fusions / suppressions). Si vous avez fait récemment des modifications sur wikidata non reflétées ici, c'est peut-être lié au délai de mise à jour du serveur SPARQL de wikidata. Réessayer d'ici quelques minutes.");
 
         return $this->redirectToRoute('app_index');
 
