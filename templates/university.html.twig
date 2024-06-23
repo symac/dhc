@@ -42,7 +42,7 @@
         }
 
         .genderIcon {
-            font-size:1.4em;
+            font-size: 1.4em;
         }
     </style>
 {% endblock %}
@@ -80,11 +80,26 @@
     {% block body %}
         <div id="introduction">
             <div id="text">
-                <h2>{{ university.label }}</h2>
-                <p>Le <a
-                            href="https://www.wikidata.org/wiki/{{ university.doctorate.qid }}">{{ university.doctorate.label }}</a>
-                    a été
-                    décerné {{ university.doctorate.awards|length }} fois.</p>
+                <h2>{{ university.label[:1]|upper ~ university.label[1:] }}</h2>
+                {% if university.doctorates|length > 1 %}
+                    <p>Cet établissement a décerné {{ university.countAwards }} doctorats répartis comme suit :</p>
+                    <ul>
+                        {% for doctorate in university.doctorates %}
+                            <li><a
+                                        href="https://www.wikidata.org/wiki/{{ doctorate.qid }}">{{ doctorate.label[:1]|upper ~ doctorate.label[1:]}}</a>
+                                décerné {{ doctorate.countAwards }} fois.</li>
+                        {% endfor %}
+                    </ul>
+
+                {% elseif university.doctorates|length == 1 %}
+                    <p>Le <a
+                                href="https://www.wikidata.org/wiki/{{ university.doctorate.qid }}">{{ university.doctorate.label }}</a>
+                        a été
+                        décerné {{ university.doctorate.awards|length }} fois.</p>
+
+                {% else %}
+
+                {% endif %}
             </div>
             <div id="genderChartParent">
                 <canvas id="genderChart"></canvas>
@@ -109,9 +124,10 @@
                             [date inconnue]
                         {% endif %}
                     </td>
-                    <td data-sort="{{ award.person.gender}}">
+                    <td data-sort="{{ award.person.gender }}">
                         <span class="genderIcon">{{ award.person.displayGender }}</span>
-                        {% if award.person.displayGender == "?" %}<br/><a href="https://www.wikidata.org/wiki/{{ award.person.qid }}">✎</a>{% endif %}
+                        {% if award.person.displayGender == "?" %}<br/><a
+                                href="https://www.wikidata.org/wiki/{{ award.person.qid }}">✎</a>{% endif %}
                     </td>
                     <td>
                         {% if award.person.image is not null %}
@@ -145,6 +161,8 @@
         </table>
 
         <div style="text-align: center;">
-            <small>⟳&nbsp;<a rel="nofollow" href="{{ url("app_university_refresh", {qid: university.qid, slug: university.label|slug}) }}">Rafraichir depuis wikidata</a></small>
+            <small>⟳&nbsp;<a rel="nofollow"
+                             href="{{ url("app_university_refresh", {qid: university.qid, slug: university.label|slug}) }}">Rafraichir
+                    depuis wikidata</a></small>
         </div>
     {% endblock %}

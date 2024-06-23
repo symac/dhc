@@ -11,7 +11,11 @@
                     [date inconnue]
                 {% endif %}
                 :
-                <a href="{{ url("app_university", {qid: award.doctorate.university.qid, slug:award.doctorate.university.label|slug }) }}">{{ award.doctorate.university.label }}</a>
+                {% if award.doctorate.university is not null %}
+                    <a href="{{ url("app_university", {qid: award.doctorate.university.qid, slug:award.doctorate.university.label|slug }) }}">{{ award.doctorate.university.label }}</a>
+                    {% else %}
+                    <i>Erreur de chargement</i>({{ award.doctorate.label }} - {{ award.doctorate.id }})
+                {% endif %}
             </li>
         {% endfor %}
     </ul>

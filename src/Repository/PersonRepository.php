@@ -24,7 +24,7 @@ class PersonRepository extends ServiceEntityRepository
             ->select( 'p', 'a', 'd', 'a', 'u')
             ->leftJoin('p.awards', 'a')
             ->leftJoin('a.doctorate', 'd')
-            ->leftJoin('d.university', 'u')
+            ->leftJoin('d.universities', 'u')
             ->andWhere('p.qid = :qid')
             ->setParameter('qid', $qid)
             ->getQuery()

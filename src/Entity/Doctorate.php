@@ -27,11 +27,16 @@ class Doctorate
     #[ORM\OneToMany(targetEntity: Award::class, mappedBy: 'doctorate', orphanRemoval: true)]
     private Collection $awards;
 
-    #[ORM\OneToOne(mappedBy: 'doctorate', cascade: ['persist', 'remove'])]
-    private ?University $university = null;
+    /**
+     * @var Collection<int, University>
+     */
+    #[ORM\ManyToMany(targetEntity: University::class, inversedBy: 'doctorates')]
+    private Collection $universities;
+
     public function __construct()
     {
         $this->awards = new ArrayCollection();
+        $this->universities = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -81,6 +86,10 @@ class Doctorate
         return new ArrayCollection(iterator_to_array($iterator));
     }
 
+    public function countAwards(): int {
+        return $this->awards->count();
+    }
+
     public function addAward(Award $award): static
     {
         if (!$this->awards->contains($award)) {
@@ -103,49 +112,34 @@ class Doctorate
         return $this;
     }
 
-    public function getUniversity(): ?University
+    /**
+     * @return Collection<int, University>
+     */
+    public function getUniversities(): Collection
     {
-        return $this->university;
+        return $this->universities;
     }
 
-    public function setUniversity(?University $university): static
+    public function getUniversity(): University
     {
-        // unset the owning side of the relation if necessary
-        if ($university === null && $this->university !== null) {
-            $this->university->setDoctorate(null);
-        }
+        return $this->universities->first();
+    }
 
-        // set the owning side of the relation if necessary
-        if ($university !== null && $university->getDoctorate() !== $this) {
-            $university->setDoctorate($this);
-        }
 
-        $this->university = $university;
+    public function addUniversity(University $university): static
+    {
+        if (!$this->universities->contains($university)) {
+            $this->universities->add($university);
+        }
 
         return $this;
     }
 
-    public function percent(string $qid = null) {
-        // Q6581072 : féminin
-        // Q6581097 : masculin
-        $total = 0;
-        $match = 0;
+    public function removeUniversity(University $university): static
+    {
+        $this->universities->removeElement($university);
 
-        foreach ($this->awards as $award) {
-            if ( ($award->getPerson()->getGender() == "Q6581072") or ($award->getPerson()->getGender() == "Q6581097") ) {
-                $total++;
-                if ($award->getPerson()->getGender() == $qid) {
-                    $match++;
-                }
-            } elseif (is_null($award->getPerson()->getGender()) && is_null($qid)) {
-                $match++;
-            }
-        }
-        if (is_null($qid)) {
-            return $match;
-        }
-
-        return floor(($match/$total) * 100);
+        return $this;
     }
 
 }

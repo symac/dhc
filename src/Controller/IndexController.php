@@ -7,6 +7,7 @@ use App\Entity\Country;
 use App\Entity\Person;
 use App\Entity\University;
 use App\Service\WikidataHarvester;
+use App\Service\WikidataUniversityHarvester;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyRdf\Sparql\Client;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -74,6 +75,8 @@ class IndexController extends AbstractController
             }
         }
 
+        $recentAwards = $entityManager->getRepository(Award::class)->getRecent(10);
+
         $countries = $entityManager->getRepository(Country::class)->findAll();
         // Serait mieux de faire directement ces tris au niveau de la base de données
         // mais pas trouvé de solution simple sous SQLite.
@@ -95,7 +98,8 @@ class IndexController extends AbstractController
             'countDhc' => $countDhc,
             'colorMale' => $this::genderMapColour("Q6581097"),
             'colorFemale' => $this::genderMapColour("Q6581072"),
-            'countries' => $countries
+            'countries' => $countries,
+            'recentAwards' => $recentAwards
         ]);
     }
 
@@ -135,7 +139,14 @@ class IndexController extends AbstractController
         $this->addFlash('success', "Mise à jour effectuée avec succès (création de $countCreate récompenses, suppression de $countDelete suite à des fusions / suppressions). Si vous avez fait récemment des modifications sur wikidata non reflétées ici, c'est peut-être lié au délai de mise à jour du serveur SPARQL de wikidata. Réessayer d'ici quelques minutes.");
 
         return $this->redirectToRoute('app_index');
+    }
 
+    #[Route('/refresh-universities', name: 'app_refresh_universities')]
+    public function refreshUniversities(WikidataUniversityHarvester $wikidataUniversityHarvester): Response {
+        $countCreate = $wikidataUniversityHarvester->run();
+        $this->addFlash('success', "Mise à jour effectuée avec succès (création de $countCreate universités).");
+
+        return $this->redirectToRoute('app_index');
     }
 
     #[Route('/etablissement/{qid}-{slug}/refresh', name: 'app_university_refresh')]

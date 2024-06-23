@@ -20,7 +20,7 @@ class UniversityRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('u')
             ->select('u', 'd', 'a', 'p')
-            ->leftJoin('u.doctorate', 'd')
+            ->leftJoin('u.doctorates', 'd')
             ->leftJoin('d.awards', 'a')
             ->leftJoin('a.person', 'p')
             ->andWhere('u.qid = :qid')
@@ -33,7 +33,7 @@ class UniversityRepository extends ServiceEntityRepository
     public function findAllForIndex(): array  {
         return $this->createQueryBuilder('u')
             ->select('u', 'd', 'a', 'p')
-            ->leftJoin('u.doctorate', 'd')
+            ->leftJoin('u.doctorates', 'd')
             ->leftJoin('d.awards', 'a')
             ->leftJoin('a.person', 'p')
             ->orderBy('UPPER(u.label)', 'ASC')
@@ -42,11 +42,15 @@ class UniversityRepository extends ServiceEntityRepository
     }
 
     public function getGenderStats(University $university): array {
-        $conn = $this->getEntityManager()->getConnection();
-        $sql = "SELECT gender, count(*) as nb FROM person, award where award.doctorate_id = ? and award.person_id = person.id group by gender;";
-        $stmt = $conn->prepare($sql);
-        $result = $stmt->executeQuery([$university->getDoctorate()->getId()]);
-        return $result->fetchAllAssociative();
+        foreach ($university->getDoctorates() as $doctorate) {
+            $conn = $this->getEntityManager()->getConnection();
+            $sql = "SELECT gender, count(*) as nb FROM person, award where award.doctorate_id = ? and award.person_id = person.id group by gender;";
+            $stmt = $conn->prepare($sql);
+            $result = $stmt->executeQuery([$doctorate->getId()]);
+            $resultArray = $result->fetchAllAssociative();
+        }
+
+        return $resultArray;
     }
 
 //    /**

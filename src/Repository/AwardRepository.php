@@ -22,11 +22,22 @@ class AwardRepository extends ServiceEntityRepository
             ->select('a', 'd', 'p', 'u')
             ->leftJoin('a.doctorate', 'd')
             ->leftJoin('a.person', 'p')
-            ->leftJoin('d.university', 'u')
+            ->leftJoin('d.universities', 'u')
             ->getQuery()
             ->getResult();
     }
 
+    public function getRecent(int $count): array {
+        return $this->createQueryBuilder('a')
+            ->select('a', 'd', 'p', 'u')
+            ->leftJoin('a.doctorate', 'd')
+            ->leftJoin('a.person', 'p')
+            ->leftJoin('d.universities', 'u')
+            ->orderBy('a.creationDate', 'DESC')
+            ->setMaxResults($count)
+            ->getQuery()
+            ->getResult();
+    }
     //    /**
     //     * @return Award[] Returns an array of Award objects
     //     */

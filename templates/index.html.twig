@@ -55,6 +55,10 @@
                 border-top: 2px dotted #CCC;
                 min-height: 20em;
             }
+
+            #prefixTab {
+                display: none;
+            }
         }
 
         .header {
@@ -105,7 +109,7 @@
 
         [role="tabs"] {
             display: flex;
-            border:2px solid #666;
+            border: 2px solid #666;
         }
 
         [role="tabs"] section {
@@ -137,7 +141,7 @@
             font-weight: bold;
             border: 2px solid #666;
             background-color: #666;
-            color:white;
+            color: white;
             border-radius: 0.3em 0.3em 0 0;
             border-bottom: 0;
         }
@@ -166,10 +170,10 @@
 
         .tabContexte {
             font-style: italic;
-            border:1px solid #CCC;
-            border-top:0;
-            font-size:0.8em;
-            padding:0.5em;
+            border: 1px solid #CCC;
+            border-top: 0;
+            font-size: 0.8em;
+            padding: 0.5em;
         }
 
     </style>
@@ -288,14 +292,16 @@
     <div class="container2">
         <nav role="tab-control">
             <ul>
-                <li>Par&nbsp;:&nbsp;</li>
+                <li id="prefixTab">Par&nbsp;:&nbsp;</li>
                 <li><label for="tab1">établissement</label></li>
                 <li><label for="tab2">pays</label></li>
                 <li><label for="tab3">occupation</label></li>
+                <li><label for="tab4">entrée</label></li>
             </ul>
         </nav>
         <div role="tabs">
             <section>
+                <!-- établissements -->
                 <input hidden="hidden" type="radio" name="tabs" id="tab1" checked="checked"/>
                 <figure>
                     <table class="sortable">
@@ -312,34 +318,42 @@
                                     <a href="{{ url("app_university", {qid: university.qid, slug: university.label|slug}) }}">{{ university.label[:1]|capitalize ~ university.label[1:] }}</a>
                                 </td>
                                 <td class="countTitulaires">
-                                    {{ university.doctorate.awards|length }}
-                                    <div class='genderGradient'
-                                         title="{{ university.doctorate.percent("Q6581097") }}% d'hommes, {{ university.doctorate.percent("Q6581072") }}% de femmes"
-                                            {% if university.doctorate.percent("Q6581097") == 0 %}
-                                         style="background: {{ colorFemale }}">
-                                        {% else %}
-                                            style="background: linear-gradient(90deg, {{ colorMale }} {{ university.doctorate.percent("Q6581097") }}%, {{ colorFemale }} {{ university.doctorate.percent("Q6581072") }}%)">
+                                    {{ university.countAwards }}
+                                    {% if university.countAwards > 0 %}
+                                        <div class='genderGradient'
+                                             title="{{ university.percent("Q6581097") }}% d'hommes, {{ university.percent("Q6581072") }}% de femmes"
+                                                {% if university.percent("Q6581097") == 0 %}
+                                             style="background: {{ colorFemale }}">
+                                            {% else %}
+                                                style="background: linear-gradient(90deg, {{ colorMale }} {{ university.percent("Q6581097") }}%, {{ colorFemale }} {{ university.percent("Q6581072") }}%)">
+                                            {% endif %}
+                                        </div>
+                                        {% if university.percent() == 1 %}
+                                            <p class="unspecifiedGender">+ {{ university.percent() }} genre
+                                                non
+                                                spécifié sur
+                                                wikidata</p>
+                                        {% elseif university.percent() > 1 %}
+                                            <p class="unspecifiedGender">+ {{ university.percent() }} genres
+                                                non
+                                                spécifiés sur
+                                                wikidata</p>
                                         {% endif %}
-                                    </div>
-                                    {% if university.doctorate.percent() == 1 %}
-                                        <p class="unspecifiedGender">+ {{ university.doctorate.percent() }} genre non
-                                            spécifié sur
-                                            wikidata</p>
-                                    {% elseif university.doctorate.percent() > 1 %}
-                                        <p class="unspecifiedGender">+ {{ university.doctorate.percent() }} genres non
-                                            spécifiés sur
-                                            wikidata</p>
                                     {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}
                         </tbody>
                     </table>
-
+                    <div style="text-align: center;">
+                        <small>⟳&nbsp;<a rel="nofollow"
+                                         href="{{ url("app_refresh_universities")}}">Rafraichir
+                                depuis wikidata</a></small>
+                    </div>
                 </figure>
 
+                <!-- pays -->
                 <input hidden="hidden" type="radio" name="tabs" id="tab2"/>
-
                 <figure>
                     <p class="tabContexte">Les pays indiqués ici correspondent aux pays de citoyenneté (<a
                                 href="https://www.wikidata.org/wiki/Property:P27">propriété P27</a> sur wikidata)
@@ -366,10 +380,40 @@
                     </table>
                 </figure>
 
+                <!-- occupation -->
                 <input hidden="hidden" type="radio" name="tabs" id="tab3"/>
-
                 <figure>
                     <p class="tabContexte">À venir.</p>
+                </figure>
+
+                <!-- date d'entrée -->
+                <input hidden="hidden" type="radio" name="tabs" id="tab4"/>
+                <figure>
+                    <p class="tabContexte">Cet onglet présente les derniers doctorats honoris causa ayant rejoint la
+                        base.</p>
+                    <table>
+                        <tr>
+                            <th>Ajout</th>
+                            <th>Univ.</th>
+                            <th>Personne</th>
+                        </tr>
+                        {% for award in recentAwards %}
+                            <tr>
+                                <td>{{ award.creationDate| date("d/m/Y") }}</td>
+                                {% if award.doctorate.universities|length == 0 %}
+                                    <td><i>Erreur de chargement</i></td>
+                                {% else %}
+                                    <td>
+                                        <a href="{{ url("app_university", {qid:award.doctorate.university.qid, slug: award.doctorate.university.label|slug}) }}">{{ award.doctorate.university.label }}</a>
+                                    </td>
+                                {% endif %}
+                                <td>
+                                    <a href="{{ url("app_person", {qid: award.person.qid, slug: award.person.label|slug}) }}">{{ award.person.label }}</a>
+                                </td>
+
+                            </tr>
+                        {% endfor %}
+                    </table>
                 </figure>
             </section>
         </div>
