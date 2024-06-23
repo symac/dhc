@@ -1,7 +1,15 @@
 {% extends "base.html.twig" %}
-
+{% block stylesheets %}
+    <style>
+        img.wd-logo {
+            height: 1em;
+            margin-left:0.5em;
+        }
+    </style>
+{% endblock %}
 {% block body %}
-    <h2>{{ person.label }} - {{ person.awards|length }} doctorats</h2>
+    <h2>{{ person.label }} - {{ person.awards|length }} doctorat{% if person.awards|length > 1 %}s{% endif %}<a
+                href="https://www.wikidata.org/wiki/{{ person.qid }}"><img alt="logo wikidata" class="wd-logo" src="{{ asset("wikidata-logo.svg") }}"/></a></h2>
     <ul>
         {% for award in person.awards %}
             <li>
@@ -13,7 +21,7 @@
                 :
                 {% if award.doctorate.university is not null %}
                     <a href="{{ url("app_university", {qid: award.doctorate.university.qid, slug:award.doctorate.university.label|slug }) }}">{{ award.doctorate.university.label }}</a>
-                    {% else %}
+                {% else %}
                     <i>Erreur de chargement</i>({{ award.doctorate.label }} - {{ award.doctorate.id }})
                 {% endif %}
             </li>
