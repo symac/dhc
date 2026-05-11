@@ -131,7 +131,7 @@ class Person
         return $this->image;
     }
 
-    public function getImageThumbnailUrl(int $width = 200): ?string
+    public function getImageThumbnailUrl(int $width = 250): ?string
     {
         if (is_null($this->getImage())) {
             return null;
