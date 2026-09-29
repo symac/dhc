@@ -101,6 +101,19 @@ class University
         return $count;
     }
 
+    public function getAwards(): ArrayCollection {
+        $awards = new ArrayCollection() ;
+        foreach ($this->doctorates as $doctorate) {
+            if (sizeof($awards) > 0) {
+            $awards = new ArrayCollection(array_merge($awards->toArray(), $doctorate->getAwards()->toArray()));
+            } else {
+                $awards = $doctorate->getAwards();
+            }
+        }
+        return $awards;
+
+    }
+
     public function percent(string $qid = null) {
         // Q6581072 : féminin
         // Q6581097 : masculin
