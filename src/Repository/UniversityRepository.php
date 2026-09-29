@@ -47,7 +47,24 @@ class UniversityRepository extends ServiceEntityRepository
             $sql = "SELECT gender, count(*) as nb FROM person, award where award.doctorate_id = ? and award.person_id = person.id group by gender;";
             $stmt = $conn->prepare($sql);
             $result = $stmt->executeQuery([$doctorate->getId()]);
-            $resultArray = $result->fetchAllAssociative();
+            if (isset($resultArray)) {
+                $additions = array_column($result->fetchAllAssociative(), 'nb', 'gender');
+                foreach ($resultArray as &$row) {
+                    $row['nb'] += $additions[$row['gender']] ?? 0;
+                    unset($additions[$row['gender']]);
+                }
+                unset($row);
+
+                foreach ($additions as $gender => $nb) {
+                    $resultArray[] = [
+                        'gender' => $gender,
+                        'nb' => $nb
+                        ];
+                }
+            } else
+            {
+                $resultArray = $result->fetchAllAssociative();
+            }
         }
 
         return $resultArray;
